@@ -211,6 +211,7 @@ func (m *Field) GenType() string {
 	if m.Field != "" {
 		typ = m.Field
 	}
+
 	switch typ {
 	case "string", "bytes":
 		return strings.Title(typ)
