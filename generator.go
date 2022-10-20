@@ -9,10 +9,10 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"reflect"
 	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 	"text/template"
 
 	"golang.org/x/tools/go/packages"
@@ -48,9 +48,10 @@ func NewGenerator(cfg Config) *Generator {
 	}
 
 	return &Generator{
-		Config: cfg,
-		Data:   make(map[string]*genInfo),
-		models: make(map[string]*generate.QueryStructMeta),
+		Config:  cfg,
+		Data:    make(map[string]*genInfo),
+		models:  make(map[string]*generate.QueryStructMeta),
+		Schemas: make(map[string]*schema.Schema),
 	}
 }
 
@@ -81,10 +82,10 @@ func (i *genInfo) methodInGenInfo(m *generate.InterfaceMethod) bool {
 // Generator code generator
 type Generator struct {
 	Config
-
-	Data   map[string]*genInfo                  //gen query data
-	models map[string]*generate.QueryStructMeta //gen model data
-	Tags   map[string]map[string]Tag
+	Tags    []string                             //支持的自定义tag
+	Data    map[string]*genInfo                  //gen query data
+	models  map[string]*generate.QueryStructMeta //gen model data
+	Schemas map[string]*schema.Schema
 }
 
 // UseDB set db connection
@@ -100,30 +101,28 @@ func (g *Generator) UseDB(db *gorm.DB) {
  */
 
 // LinkModel 链接一个struct 使用 struct中的tag来设定 modelType FieldType 复用gorm tag中的 serializer 等 支持为生成的struct 增加额外的tag
-func (g *Generator) LinkModel(name string, data any) {
-	if g.Tags == nil {
-		g.Tags = map[string]map[string]Tag{}
+func (g *Generator) LinkModel(data any) error {
+	if parse, err := schema.Parse(data, &sync.Map{}, schema.NamingStrategy{}); err != nil {
+		return err
+	} else {
+		g.Schemas[parse.Table] = parse
+		return nil
 	}
-	reType := reflect.TypeOf(data)
-	// 入参类型校验
-	if reType.Kind() != reflect.Ptr || reType.Elem().Kind() != reflect.Struct {
-		panic(name + "指针应该是结构体")
-	}
-	v := reflect.ValueOf(data).Elem()
-	ret := map[string]Tag{}
-	for i := 0; i < v.NumField(); i++ {
-		structField := v.Type().Field(i)
-		ret[CamelCaseToUdnderscore(structField.Name)] = Parse(structField.Tag)
-	}
-	g.Tags[name] = ret
 }
 func (g *Generator) GenerateModel(tableName string, opts ...ModelOpt) *generate.QueryStructMeta {
 	return g.GenerateModelAs(tableName, g.db.Config.NamingStrategy.SchemaName(tableName), opts...)
 }
+func (g *Generator) GetScheme(name string) *schema.Schema {
+	if s, ok := g.Schemas[name]; ok {
+		return s
+	} else {
+		return nil
+	}
+}
 
 // GenerateModelAs catch table info from db, return a BaseStruct
 func (g *Generator) GenerateModelAs(tableName string, modelName string, opts ...ModelOpt) *generate.QueryStructMeta {
-	meta, err := generate.GetQueryStructMeta(g.db, g.genModelConfig(tableName, modelName, opts))
+	meta, err := generate.GetQueryStructMeta(g.db, g.genModelConfig(tableName, g.GetScheme(tableName), modelName, opts))
 	if err != nil {
 		g.db.Logger.Error(context.Background(), "generate struct from table fail: %s", err)
 		panic("generate struct fail")
@@ -166,7 +165,13 @@ func (g *Generator) GenerateModelFrom(obj helper.Object) *generate.QueryStructMe
 	return s
 }
 
-func (g *Generator) genModelConfig(tableName string, modelName string, modelOpts []ModelOpt) *model.Config {
+func (g *Generator) genModelConfig(tableName string, schema *schema.Schema, modelName string, modelOpts []ModelOpt) *model.Config {
+	tags := make(map[string]model.Tag)
+	if schema != nil {
+		for _, f := range schema.Fields {
+			tags[f.DBName] = model.Parse(f.Tag)
+		}
+	}
 	return &model.Config{
 		ModelPkg:       g.Config.ModelPkgPath,
 		TablePrefix:    g.getTablePrefix(),
@@ -174,6 +179,8 @@ func (g *Generator) genModelConfig(tableName string, modelName string, modelOpts
 		ModelName:      modelName,
 		ImportPkgPaths: g.importPkgPaths,
 		ModelOpts:      modelOpts,
+		Schema:         schema,
+		Tags:           tags,
 		NameStrategy: model.NameStrategy{
 			SchemaNameOpts: g.dbNameOpts,
 			TableNameNS:    g.tableNameNS,

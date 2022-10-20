@@ -1,6 +1,7 @@
 package model
 
 import (
+	"gorm.io/gorm/schema"
 	"path/filepath"
 	"strings"
 
@@ -16,7 +17,8 @@ type Config struct {
 
 	ImportPkgPaths []string
 	ModelOpts      []Option
-
+	Schema         *schema.Schema
+	Tags           map[string]Tag
 	NameStrategy
 	FieldConfig
 	MethodConfig

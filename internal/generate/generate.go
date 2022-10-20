@@ -18,14 +18,14 @@ import (
 
 func getFields(db *gorm.DB, conf *model.Config, columns []*model.Column) (fields []*model.Field) {
 	for _, col := range columns {
+		col.Field = conf.Schema.LookUpField(col.TableName)
 		col.SetDataTypeMap(conf.DataTypeMap)
 		col.WithNS(conf.FieldJSONTagNS, conf.FieldNewTagNS)
-
 		m := col.ToField(conf.FieldNullable, conf.FieldCoverable, conf.FieldSignable)
-
 		if filterField(m, conf.FilterOpts) == nil {
 			continue
 		}
+
 		if t, ok := col.ColumnType.ColumnType(); ok && !conf.FieldWithTypeTag { // remove type tag if FieldWithTypeTag == false
 			m.GORMTag = strings.ReplaceAll(m.GORMTag, ";type:"+t, "")
 		}

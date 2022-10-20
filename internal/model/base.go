@@ -164,6 +164,7 @@ func (m dataTypeMap) Get(dataType, detailType string) string {
 // Field user input structures
 type Field struct {
 	Name             string
+	Field            string
 	Type             string
 	ColumnName       string
 	ColumnComment    string
@@ -207,6 +208,9 @@ func (m *Field) GenType() string {
 		return m.CustomGenType
 	}
 	typ := strings.TrimLeft(m.Type, "*")
+	if m.Field != "" {
+		typ = m.Field
+	}
 	switch typ {
 	case "string", "bytes":
 		return strings.Title(typ)

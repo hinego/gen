@@ -3,6 +3,7 @@ package model
 import (
 	"bytes"
 	"fmt"
+	"gorm.io/gorm/schema"
 	"reflect"
 	"strings"
 
@@ -18,6 +19,7 @@ type Column struct {
 	dataTypeMap map[string]func(detailType string) (dataType string) `gorm:"-"`
 	jsonTagNS   func(columnName string) string                       `gorm:"-"`
 	newTagNS    func(columnName string) string                       `gorm:"-"`
+	Field       *schema.Field
 }
 
 // SetDataTypeMap set data type map
@@ -68,15 +70,31 @@ func (c *Column) ToField(nullable, coverable, signable bool) *Field {
 	if c, ok := c.Comment(); ok {
 		comment = c
 	}
+	var field string
+	var newTag string
+	if c.Field != nil {
+		fieldType = c.Field.FieldType.String()
+		if fe, ok := c.Field.TagSettings["FIELD"]; ok {
+			field = fe
+		}
+
+		for k, v := range Parse(c.Field.Tag) {
+			if k == "json" || k == "gorm" {
+				continue
+			}
+			newTag += fmt.Sprintf(`%v:"%v" `, k, v)
+		}
+	}
 
 	return &Field{
 		Name:             c.Name(),
+		Field:            field,
 		Type:             fieldType,
 		ColumnName:       c.Name(),
 		MultilineComment: c.multilineComment(),
 		GORMTag:          c.buildGormTag(),
 		JSONTag:          c.jsonTagNS(c.Name()),
-		NewTag:           c.newTagNS(c.Name()),
+		NewTag:           newTag + c.newTagNS(c.Name()),
 		ColumnComment:    comment,
 	}
 }
@@ -89,7 +107,6 @@ func (c *Column) multilineComment() bool {
 func (c *Column) buildGormTag() string {
 	var buf bytes.Buffer
 	buf.WriteString(fmt.Sprintf("column:%s;type:%s", c.Name(), c.columnType()))
-
 	isPriKey, ok := c.PrimaryKey()
 	isValidPriKey := ok && isPriKey
 	if isValidPriKey {
@@ -100,7 +117,11 @@ func (c *Column) buildGormTag() string {
 	} else if n, ok := c.Nullable(); ok && !n {
 		buf.WriteString(";not null")
 	}
-
+	if c.Field != nil {
+		if ser, ok := c.Field.TagSettings["SERIALIZER"]; ok {
+			buf.WriteString(";serializer:" + ser)
+		}
+	}
 	for _, idx := range c.Indexes {
 		if idx == nil {
 			continue
