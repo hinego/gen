@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"reflect"
 	"runtime"
 	"strconv"
 	"strings"
@@ -83,6 +84,7 @@ type Generator struct {
 
 	Data   map[string]*genInfo                  //gen query data
 	models map[string]*generate.QueryStructMeta //gen model data
+	Tags   map[string]map[string]Tag
 }
 
 // UseDB set db connection
@@ -97,7 +99,24 @@ func (g *Generator) UseDB(db *gorm.DB) {
 ** Provided by @qqxhb
  */
 
-// GenerateModel catch table info from db, return a BaseStruct
+// LinkModel 链接一个struct 使用 struct中的tag来设定 modelType FieldType 复用gorm tag中的 serializer 等 支持为生成的struct 增加额外的tag
+func (g *Generator) LinkModel(name string, data any) {
+	if g.Tags == nil {
+		g.Tags = map[string]map[string]Tag{}
+	}
+	reType := reflect.TypeOf(data)
+	// 入参类型校验
+	if reType.Kind() != reflect.Ptr || reType.Elem().Kind() != reflect.Struct {
+		panic(name + "指针应该是结构体")
+	}
+	v := reflect.ValueOf(data).Elem()
+	ret := map[string]Tag{}
+	for i := 0; i < v.NumField(); i++ {
+		structField := v.Type().Field(i)
+		ret[CamelCaseToUdnderscore(structField.Name)] = Parse(structField.Tag)
+	}
+	g.Tags[name] = ret
+}
 func (g *Generator) GenerateModel(tableName string, opts ...ModelOpt) *generate.QueryStructMeta {
 	return g.GenerateModelAs(tableName, g.db.Config.NamingStrategy.SchemaName(tableName), opts...)
 }
