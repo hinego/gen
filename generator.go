@@ -101,8 +101,20 @@ func (g *Generator) UseDB(db *gorm.DB) {
  */
 
 // LinkModel 链接一个struct 使用 struct中的tag来设定 modelType FieldType 复用gorm tag中的 serializer 等 支持为生成的struct 增加额外的tag
-func (g *Generator) LinkModel(data any) error {
-	if parse, err := schema.Parse(data, &sync.Map{}, schema.NamingStrategy{}); err != nil {
+func (g *Generator) LinkModel(data ...any) error {
+	if len(data) == 0 {
+		return nil
+	}
+	if len(data) != 1 {
+		for _, v := range data {
+			if err := g.LinkModel(v); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+	k := data[0]
+	if parse, err := schema.Parse(k, &sync.Map{}, schema.NamingStrategy{}); err != nil {
 		return err
 	} else {
 		g.Schemas[parse.Table] = parse
@@ -166,12 +178,6 @@ func (g *Generator) GenerateModelFrom(obj helper.Object) *generate.QueryStructMe
 }
 
 func (g *Generator) genModelConfig(tableName string, schema *schema.Schema, modelName string, modelOpts []ModelOpt) *model.Config {
-	tags := make(map[string]model.Tag)
-	if schema != nil {
-		for _, f := range schema.Fields {
-			tags[f.DBName] = model.Parse(f.Tag)
-		}
-	}
 	return &model.Config{
 		ModelPkg:       g.Config.ModelPkgPath,
 		TablePrefix:    g.getTablePrefix(),
@@ -180,7 +186,6 @@ func (g *Generator) genModelConfig(tableName string, schema *schema.Schema, mode
 		ImportPkgPaths: g.importPkgPaths,
 		ModelOpts:      modelOpts,
 		Schema:         schema,
-		Tags:           tags,
 		NameStrategy: model.NameStrategy{
 			SchemaNameOpts: g.dbNameOpts,
 			TableNameNS:    g.tableNameNS,
