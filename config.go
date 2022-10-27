@@ -27,12 +27,11 @@ const (
 
 // Config generator's basic configuration
 type Config struct {
-	db *gorm.DB // db connection
-
-	OutPath      string // query code path
-	OutFile      string // query code file name, default: gen.go
-	ModelPkgPath string // generated model code's package name
-	WithUnitTest bool   // generate unit test for query code
+	db           *gorm.DB // db connection
+	OutPath      string   // query code path
+	OutFile      string   // query code file name, default: gen.go
+	ModelPkgPath string   // generated model code's package name
+	WithUnitTest bool     // generate unit test for query code
 
 	// generate model global configuration
 	FieldNullable     bool // generate pointer when field is nullable

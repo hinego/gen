@@ -155,12 +155,10 @@ func (b *QueryStructMeta) StructComment() string {
 
 // ReviseDIYMethod check diy method duplication name
 func (b *QueryStructMeta) ReviseDIYMethod() error {
-	var duplicateMethodName []string
 	methods := make([]*parser.Method, 0, len(b.ModelMethods))
 	methodMap := make(map[string]bool, len(b.ModelMethods))
 	for _, method := range b.ModelMethods {
 		if methodMap[method.MethodName] || method.MethodName == "TableName" {
-			duplicateMethodName = append(duplicateMethodName, method.MethodName)
 			continue
 		}
 		method.Receiver.Package = ""
@@ -170,9 +168,6 @@ func (b *QueryStructMeta) ReviseDIYMethod() error {
 	}
 	b.ModelMethods = methods
 
-	if len(duplicateMethodName) > 0 {
-		return fmt.Errorf("can't generate struct with duplicated method, please check method name: %s", strings.Join(duplicateMethodName, ","))
-	}
 	return nil
 }
 

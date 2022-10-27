@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"gorm.io/gorm/schema"
-	"log"
 	"reflect"
 	"strings"
 
@@ -75,9 +74,6 @@ func (c *Column) ToField(nullable, coverable, signable bool) *Field {
 	var newTag string
 	if c.Field != nil {
 		fieldType = c.Field.FieldType.String()
-		if c.Name() == "ip" {
-			log.Println(c.Field.Tag)
-		}
 		if fe := c.Field.Tag.Get("field"); fe != "" {
 			field = fe
 		}

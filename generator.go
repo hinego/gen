@@ -28,6 +28,8 @@ import (
 	"gorm.io/gen/internal/utils/pools"
 )
 
+var Std = log.New(os.Stderr, "", log.LstdFlags|log.Llongfile)
+
 // T generic type
 type T interface{}
 
@@ -52,6 +54,7 @@ func NewGenerator(cfg Config) *Generator {
 		Data:    make(map[string]*genInfo),
 		models:  make(map[string]*generate.QueryStructMeta),
 		Schemas: make(map[string]*schema.Schema),
+		Modes:   make(map[string]any),
 	}
 }
 
@@ -86,6 +89,7 @@ type Generator struct {
 	Data    map[string]*genInfo                  //gen query data
 	models  map[string]*generate.QueryStructMeta //gen model data
 	Schemas map[string]*schema.Schema
+	Modes   map[string]any
 }
 
 // UseDB set db connection
@@ -114,18 +118,32 @@ func (g *Generator) LinkModel(data ...any) error {
 		return nil
 	}
 	k := data[0]
+	if err := g.db.AutoMigrate(k); err != nil {
+		return err
+	}
 	if parse, err := schema.Parse(k, &sync.Map{}, schema.NamingStrategy{}); err != nil {
 		return err
 	} else {
+		g.Modes[parse.Table] = k
 		g.Schemas[parse.Table] = parse
 		return nil
 	}
 }
 func (g *Generator) GenerateModel(tableName string, opts ...ModelOpt) *generate.QueryStructMeta {
+	if opt := g.GetModel(tableName); opt != nil {
+		opts = append(opts, WithMethod(opt))
+	}
 	return g.GenerateModelAs(tableName, g.db.Config.NamingStrategy.SchemaName(tableName), opts...)
 }
 func (g *Generator) GetScheme(name string) *schema.Schema {
 	if s, ok := g.Schemas[name]; ok {
+		return s
+	} else {
+		return nil
+	}
+}
+func (g *Generator) GetModel(name string) any {
+	if s, ok := g.Modes[name]; ok {
 		return s
 	} else {
 		return nil
@@ -149,23 +167,19 @@ func (g *Generator) GenerateModelAs(tableName string, modelName string, opts ...
 	return meta
 }
 
-// GenerateAllTable generate all tables in db
 func (g *Generator) GenerateAllTable(opts ...ModelOpt) (tableModels []interface{}) {
 	tableList, err := g.db.Migrator().GetTables()
 	if err != nil {
 		panic(fmt.Errorf("get all tables fail: %w", err))
 	}
-
 	g.info(fmt.Sprintf("find %d table from db: %s", len(tableList), tableList))
-
-	tableModels = make([]interface{}, len(tableList))
-	for i, tableName := range tableList {
-		tableModels[i] = g.GenerateModel(tableName, opts...)
+	tableModels = make([]any, 0)
+	for _, tableName := range tableList {
+		tableModels = append(tableModels, g.GenerateModel(tableName, opts...))
 	}
 	return tableModels
 }
 
-// GenerateModelFrom generate model from object
 func (g *Generator) GenerateModelFrom(obj helper.Object) *generate.QueryStructMeta {
 	s, err := generate.GetQueryStructMetaFromObject(obj, g.genModelObjConfig())
 	if err != nil {
@@ -293,12 +307,15 @@ func (g *Generator) Execute() {
 
 	g.info("Generate code done.")
 }
+func Println(v ...any) {
+	Std.Output(3, fmt.Sprintln(v...))
+}
 
 // info logger
 func (g *Generator) info(logInfos ...string) {
 	for _, l := range logInfos {
 		g.db.Logger.Info(context.Background(), l)
-		log.Println(l)
+		Println(l)
 	}
 }
 
