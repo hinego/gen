@@ -210,10 +210,7 @@ var (
 				GORMTag:      config.GORMTag,
 				NewTag:       config.NewTag,
 				OverwriteTag: config.OverwriteTag,
-
-				Relation: field.NewRelationWithType(
-					relationship, fieldName, table.StructInfo.Package+"."+table.StructInfo.Type,
-					table.Relations()...),
+				Relation:     field.NewRelationWithType(relationship, fieldName, table.StructInfo.Package+"."+table.StructInfo.Type, table.Relations()...),
 			}
 		}
 	}

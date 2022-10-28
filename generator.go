@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"gorm.io/gen/field"
 	"io"
 	"io/ioutil"
 	"log"
@@ -53,7 +54,7 @@ func NewGenerator(cfg Config) *Generator {
 		Config:  cfg,
 		Data:    make(map[string]*genInfo),
 		models:  make(map[string]*generate.QueryStructMeta),
-		Schemas: make(map[string]*schema.Schema),
+		Schemas: make(map[any]*schema.Schema),
 		Modes:   make(map[string]any),
 	}
 }
@@ -88,7 +89,7 @@ type Generator struct {
 	Tags    []string                             //支持的自定义tag
 	Data    map[string]*genInfo                  //gen query data
 	models  map[string]*generate.QueryStructMeta //gen model data
-	Schemas map[string]*schema.Schema
+	Schemas map[any]*schema.Schema
 	Modes   map[string]any
 }
 
@@ -126,6 +127,7 @@ func (g *Generator) LinkModel(data ...any) error {
 	} else {
 		g.Modes[parse.Table] = k
 		g.Schemas[parse.Table] = parse
+		g.Schemas[parse.ModelType] = parse
 		return nil
 	}
 }
@@ -135,7 +137,7 @@ func (g *Generator) GenerateModel(tableName string, opts ...ModelOpt) *generate.
 	}
 	return g.GenerateModelAs(tableName, g.db.Config.NamingStrategy.SchemaName(tableName), opts...)
 }
-func (g *Generator) GetScheme(name string) *schema.Schema {
+func (g *Generator) GetScheme(name any) *schema.Schema {
 	if s, ok := g.Schemas[name]; ok {
 		return s
 	} else {
@@ -191,7 +193,20 @@ func (g *Generator) GenerateModelFrom(obj helper.Object) *generate.QueryStructMe
 	return s
 }
 
-func (g *Generator) genModelConfig(tableName string, schema *schema.Schema, modelName string, modelOpts []ModelOpt) *model.Config {
+func (g *Generator) genModelConfig(tableName string, sc *schema.Schema, modelName string, modelOpts []ModelOpt) *model.Config {
+	if sc != nil {
+		for k, v := range sc.Relationships.Relations {
+			if s1 := g.GetScheme(v.Field.FieldType); s1 == nil {
+				continue
+			} else {
+				log.Println("增加rela", s1.Table)
+				modelOpts = append(modelOpts, FieldRelate(field.RelationshipType(v.Type), k, g.GenerateModel(s1.Table), &field.RelateConfig{
+					GORMTag: v.Field.Tag.Get("gorm"),
+				}))
+			}
+
+		}
+	}
 	return &model.Config{
 		ModelPkg:       g.Config.ModelPkgPath,
 		TablePrefix:    g.getTablePrefix(),
@@ -199,7 +214,7 @@ func (g *Generator) genModelConfig(tableName string, schema *schema.Schema, mode
 		ModelName:      modelName,
 		ImportPkgPaths: g.importPkgPaths,
 		ModelOpts:      modelOpts,
-		Schema:         schema,
+		Schema:         sc,
 		NameStrategy: model.NameStrategy{
 			SchemaNameOpts: g.dbNameOpts,
 			TableNameNS:    g.tableNameNS,

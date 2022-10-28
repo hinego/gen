@@ -240,7 +240,7 @@ func (p *Param) astGetParamType(param *ast.Field) {
 	case *ast.Ident:
 		p.Type = v.Name
 		if v.Obj != nil {
-			p.Package = "UNDEFINED" // set a placeholder
+			p.Package = "" // set a placeholder
 		}
 	case *ast.SelectorExpr:
 		p.astGetEltType(v)
@@ -267,7 +267,7 @@ func (p *Param) astGetEltType(expr ast.Expr) {
 	case *ast.Ident:
 		p.Type = v.Name
 		if v.Obj != nil {
-			p.Package = "UNDEFINED"
+			p.Package = ""
 		}
 	case *ast.SelectorExpr:
 		p.Type = v.Sel.Name
@@ -391,7 +391,7 @@ func (m *DIYMethods) Visit(n ast.Node) (w ast.Visitor) {
 			return
 		}
 
-		// use ast read bind start package is UNDEFINED ,set it null string
+		// use ast read bind start package is  ,set it null string
 		structMeta[0].Package = ""
 		m.Methods = append(m.Methods, &Method{
 			Receiver:   structMeta[0],
