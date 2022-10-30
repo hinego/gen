@@ -96,7 +96,6 @@ func (cfg *Config) GetModelMethods() (methods []interface{}) {
 	if cfg == nil {
 		return
 	}
-
 	for _, opt := range cfg.MethodOpts {
 		methods = append(methods, opt.Methods()...)
 	}

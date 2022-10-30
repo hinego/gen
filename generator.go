@@ -199,7 +199,6 @@ func (g *Generator) genModelConfig(tableName string, sc *schema.Schema, modelNam
 			if s1 := g.GetScheme(v.Field.FieldType); s1 == nil {
 				continue
 			} else {
-				log.Println("增加rela", s1.Table)
 				modelOpts = append(modelOpts, FieldRelate(field.RelationshipType(v.Type), k, g.GenerateModel(s1.Table), &field.RelateConfig{
 					GORMTag: v.Field.Tag.Get("gorm"),
 				}))

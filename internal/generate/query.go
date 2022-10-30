@@ -175,7 +175,7 @@ func (b *QueryStructMeta) addMethodFromAddMethodOpt(methods ...interface{}) *Que
 	for _, method := range methods {
 		modelMethods, err := parser.GetModelMethod(method, 4)
 		if err != nil {
-			panic("add diy method err:" + err.Error())
+			panic("add diy method err:" + err.Error() + reflect.TypeOf(method).String())
 		}
 		b.ModelMethods = append(b.ModelMethods, modelMethods.Methods...)
 	}

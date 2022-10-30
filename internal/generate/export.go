@@ -3,6 +3,7 @@ package generate
 import (
 	"context"
 	"fmt"
+	"log"
 	"reflect"
 	"strings"
 
@@ -35,7 +36,7 @@ func GetQueryStructMeta(db *gorm.DB, conf *model.Config) (*QueryStructMeta, erro
 	if err != nil {
 		return nil, err
 	}
-
+	log.Println("conf.GetModelMethods()...", conf.GetModelMethods())
 	return (&QueryStructMeta{
 		db:              db,
 		Source:          model.Table,
