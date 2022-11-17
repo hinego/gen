@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"gorm.io/gen/field"
+	"github.com/hinego/gen/field"
 	"io"
 	"io/ioutil"
 	"log"
@@ -21,12 +21,12 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
 
-	"gorm.io/gen/helper"
-	"gorm.io/gen/internal/generate"
-	"gorm.io/gen/internal/model"
-	"gorm.io/gen/internal/parser"
-	tmpl "gorm.io/gen/internal/template"
-	"gorm.io/gen/internal/utils/pools"
+	"github.com/hinego/gen/helper"
+	"github.com/hinego/gen/internal/generate"
+	"github.com/hinego/gen/internal/model"
+	"github.com/hinego/gen/internal/parser"
+	tmpl "github.com/hinego/gen/internal/template"
+	"github.com/hinego/gen/internal/utils/pools"
 )
 
 var Std = log.New(os.Stderr, "", log.LstdFlags|log.Llongfile)

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"gorm.io/gen/field"
+	"github.com/hinego/gen/field"
 )
 
 const (

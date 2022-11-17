@@ -11,10 +11,10 @@ import (
 	"gorm.io/gorm/schema"
 	"gorm.io/gorm/utils/tests"
 
-	"gorm.io/gen/field"
-	"gorm.io/gen/helper"
-	"gorm.io/gen/internal/model"
-	"gorm.io/gen/internal/parser"
+	"github.com/hinego/gen/field"
+	"github.com/hinego/gen/helper"
+	"github.com/hinego/gen/internal/model"
+	"github.com/hinego/gen/internal/parser"
 )
 
 // GetQueryStructMeta generate db model by table name

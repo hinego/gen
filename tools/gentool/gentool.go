@@ -1,7 +1,7 @@
 package main
 
 import (
-	"gorm.io/gen"
+	"github.com/hinego/gen"
 	"log"
 )
 

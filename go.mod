@@ -1,4 +1,4 @@
-module gorm.io/gen
+module github.com/hinego/gen
 
 go 1.19
 

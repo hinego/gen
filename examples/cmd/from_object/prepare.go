@@ -3,7 +3,7 @@ package main
 import (
 	"strings"
 
-	"gorm.io/gen/helper"
+	"github.com/hinego/gen/helper"
 )
 
 var _ helper.Object = new(Demo)

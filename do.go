@@ -12,8 +12,8 @@ import (
 	"gorm.io/gorm/clause"
 	"gorm.io/gorm/schema"
 
-	"gorm.io/gen/field"
-	"gorm.io/gen/helper"
+	"github.com/hinego/gen/field"
+	"github.com/hinego/gen/helper"
 )
 
 // ResultInfo query/execute info
