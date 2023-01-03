@@ -108,7 +108,7 @@ func (c *Column) buildGormTag() string {
 	var buf bytes.Buffer
 	buf.WriteString(fmt.Sprintf("column:%s", c.Name()))
 	if c.Field != nil && c.Field.FieldType.String() == "decimal.Decimal" {
-		buf.WriteString(fmt.Sprintf(";type:%s", c.columnType()))
+		buf.WriteString(fmt.Sprintf(";type:numeric"))
 	} else {
 		buf.WriteString(fmt.Sprintf(";type:%s", c.columnType()))
 	}
