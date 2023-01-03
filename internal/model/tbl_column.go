@@ -106,7 +106,12 @@ func (c *Column) multilineComment() bool {
 
 func (c *Column) buildGormTag() string {
 	var buf bytes.Buffer
-	buf.WriteString(fmt.Sprintf("column:%s;type:%s", c.Name(), c.columnType()))
+	buf.WriteString(fmt.Sprintf("column:%s", c.Name()))
+	if c.Field != nil && c.Field.FieldType.String() == "decimal.Decimal" {
+		buf.WriteString(fmt.Sprintf(";type:%s", c.columnType()))
+	} else {
+		buf.WriteString(fmt.Sprintf(";type:%s", c.columnType()))
+	}
 	isPriKey, ok := c.PrimaryKey()
 	isValidPriKey := ok && isPriKey
 	if isValidPriKey {
@@ -121,6 +126,7 @@ func (c *Column) buildGormTag() string {
 		if ser, ok := c.Field.TagSettings["SERIALIZER"]; ok {
 			buf.WriteString(";serializer:" + ser)
 		}
+
 	}
 	for _, idx := range c.Indexes {
 		if idx == nil {
