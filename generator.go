@@ -619,9 +619,25 @@ func (g *Generator) output(fileName string, content []byte) error {
 }
 
 func (g *Generator) pushQueryStructMeta(meta *generate.QueryStructMeta) (*genInfo, error) {
+
 	structName := meta.ModelStructName
+	if structName == "Transaction" {
+		structName = "Tx"
+	}
 	if g.Data[structName] == nil {
-		g.Data[structName] = &genInfo{QueryStructMeta: meta}
+		g.Data[structName] = &genInfo{QueryStructMeta: &generate.QueryStructMeta{
+			Generated:       meta.Generated,
+			FileName:        meta.FileName,
+			S:               meta.S,
+			QueryStructName: meta.QueryStructName,
+			ModelStructName: structName,
+			TableName:       meta.TableName,
+			StructInfo:      meta.StructInfo,
+			Fields:          meta.Fields,
+			Source:          meta.Source,
+			ImportPkgPaths:  meta.ImportPkgPaths,
+			ModelMethods:    meta.ModelMethods,
+		}}
 	}
 	if g.Data[structName].Source != meta.Source {
 		return nil, fmt.Errorf("cannot generate struct with the same name from different source:%s.%s and %s.%s",
