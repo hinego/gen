@@ -118,6 +118,8 @@ func (c *Column) buildGormTag() string {
 		buf.WriteString(";primaryKey")
 		if at, ok := c.AutoIncrement(); ok {
 			buf.WriteString(fmt.Sprintf(";autoIncrement:%t", at))
+		} else {
+			buf.WriteString(fmt.Sprintf(";autoIncrement:false"))
 		}
 	} else if n, ok := c.Nullable(); ok && !n {
 		buf.WriteString(";not null")
