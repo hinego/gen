@@ -9,8 +9,11 @@ import (
 	"gorm.io/driver/sqlite"
 	"gorm.io/driver/sqlserver"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
+	"log"
 	"os"
 	"strings"
+	"time"
 )
 
 // DBType database type
@@ -50,19 +53,29 @@ type YamlConfig struct {
 	Database *CmdParams `yaml:"database"` //
 }
 
+var newLogger = logger.New(
+	log.New(os.Stdout, "\r\n", log.LstdFlags), // io writer（日志输出的目标，前缀和日志包含的内容——译者注）
+	logger.Config{
+		SlowThreshold:             time.Second,   // 慢 SQL 阈值
+		LogLevel:                  logger.Silent, // 日志级别
+		IgnoreRecordNotFoundError: true,          // 忽略ErrRecordNotFound（记录未找到）错误
+		Colorful:                  true,          // 禁用彩色打印
+	},
+)
+
 func Connect(t DBType, dsn string) (*gorm.DB, error) {
 	if dsn == "" {
 		return nil, fmt.Errorf("dsn cannot be empty")
 	}
 	switch t {
 	case DbMySQL:
-		return gorm.Open(mysql.Open(dsn))
+		return gorm.Open(mysql.Open(dsn), &gorm.Config{Logger: newLogger})
 	case DbPostgres:
-		return gorm.Open(postgres.Open(dsn))
+		return gorm.Open(postgres.Open(dsn), &gorm.Config{Logger: newLogger})
 	case DbSQLite:
-		return gorm.Open(sqlite.Open(dsn))
+		return gorm.Open(sqlite.Open(dsn), &gorm.Config{Logger: newLogger})
 	case DbSQLServer:
-		return gorm.Open(sqlserver.Open(dsn))
+		return gorm.Open(sqlserver.Open(dsn), &gorm.Config{Logger: newLogger})
 	default:
 		return nil, fmt.Errorf("unknow db %q (support mysql || postgres || sqlite || sqlserver for now)", t)
 	}
