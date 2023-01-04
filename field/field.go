@@ -35,6 +35,26 @@ func (field Field) Gt(value driver.Valuer) Expr {
 	return expr{e: clause.Gt{Column: field.RawExpr(), Value: value}}
 }
 
+// Add ...
+func (field Field) Add(value driver.Valuer) Float32 {
+	return Float32{field.add(value)}
+}
+
+// Sub ...
+func (field Field) Sub(value driver.Valuer) Float32 {
+	return Float32{field.sub(value)}
+}
+
+// Mul ...
+func (field Field) Mul(value driver.Valuer) Float32 {
+	return Float32{field.mul(value)}
+}
+
+// Div ...
+func (field Field) Div(value driver.Valuer) Float32 {
+	return Float32{field.div(value)}
+}
+
 // Gte ...
 func (field Field) Gte(value driver.Valuer) Expr {
 	return expr{e: clause.Gte{Column: field.RawExpr(), Value: value}}
