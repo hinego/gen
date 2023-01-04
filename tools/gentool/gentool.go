@@ -43,7 +43,6 @@ func main() {
 		//table.Link{},
 	}
 	if err := g.LinkModel(m...); err != nil {
-		log.Println(err)
 		return
 	}
 	if !config.OnlyModel {

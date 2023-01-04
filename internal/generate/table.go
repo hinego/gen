@@ -1,7 +1,6 @@
 package generate
 
 import (
-	"context"
 	"errors"
 
 	"gorm.io/gorm"
@@ -36,7 +35,6 @@ func getTableColumns(db *gorm.DB, schemaName string, tableName string, indexTag 
 
 	index, err := mt.GetTableIndex(schemaName, tableName)
 	if err != nil { //ignore find index err
-		db.Logger.Warn(context.Background(), "GetTableIndex for %s,err=%s", tableName, err.Error())
 		return result, nil
 	}
 	if len(index) == 0 {

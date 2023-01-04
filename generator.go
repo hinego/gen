@@ -3,6 +3,7 @@ package gen
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/hinego/gen/field"
 	"io"
@@ -164,8 +165,6 @@ func (g *Generator) GenerateModelAs(tableName string, modelName string, opts ...
 		return nil
 	}
 	g.models[meta.ModelStructName] = meta
-
-	g.info(fmt.Sprintf("got %d columns from table <%s>", len(meta.Fields), meta.TableName))
 	return meta
 }
 
@@ -174,7 +173,9 @@ func (g *Generator) GenerateAllTable(opts ...ModelOpt) (tableModels []interface{
 	if err != nil {
 		panic(fmt.Errorf("get all tables fail: %w", err))
 	}
-	g.info(fmt.Sprintf("find %d table from db: %s", len(tableList), tableList))
+	g.info(fmt.Sprintf("find %d table from db", len(tableList)))
+	data, _ := json.Marshal(tableList)
+	g.info(string(data))
 	tableModels = make([]any, 0)
 	for _, tableName := range tableList {
 		tableModels = append(tableModels, g.GenerateModel(tableName, opts...))
@@ -475,7 +476,6 @@ func (g *Generator) generateSingleQueryFile(data *genInfo) (err error) {
 		return err
 	}
 
-	defer g.info(fmt.Sprintf("generate query file: %s/%s.gen.go", g.OutPath, data.FileName))
 	return g.output(fmt.Sprintf("%s/%s.gen.go", g.OutPath, data.FileName), buf.Bytes())
 }
 
@@ -557,8 +557,6 @@ func (g *Generator) generateModelFile() error {
 				errChan <- err
 				return
 			}
-
-			g.info(fmt.Sprintf("generate model file(table <%s> -> {%s.%s}): %s", data.TableName, data.StructInfo.Package, data.StructInfo.Type, modelFile))
 		}(data)
 	}
 	select {
