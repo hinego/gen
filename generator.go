@@ -330,7 +330,7 @@ func Println(v ...any) {
 func (g *Generator) info(logInfos ...string) {
 	for _, l := range logInfos {
 		g.db.Logger.Info(context.Background(), l)
-		Println(l)
+		log.Output(3, l)
 	}
 }
 
