@@ -201,10 +201,16 @@ func (g *Generator) genModelConfig(tableName string, sc *schema.Schema, modelNam
 				continue
 			} else {
 				modelOpts = append(modelOpts, FieldRelate(field.RelationshipType(v.Type), k, g.GenerateModel(s1.Table), &field.RelateConfig{
-					GORMTag: v.Field.Tag.Get("gorm"),
+					//GORMTag: v.Field.Tag.Get("gorm"),
+					//JSONTag: v.Field.Tag.Get("json"),
+					OverwriteTag: string(v.Field.Tag),
 				}))
 			}
-
+		}
+		for _, v := range sc.Fields {
+			if v.Tag.Get("gorm") == "-" {
+				modelOpts = append(modelOpts, FieldNew(v.Name, v.FieldType.String(), string(v.Tag)))
+			}
 		}
 	}
 	return &model.Config{

@@ -205,7 +205,7 @@ var (
 		return func(*model.Field) *model.Field {
 			return &model.Field{
 				Name:         fieldName,
-				Type:         config.RelateFieldPrefix(relationship) + table.StructInfo.Type,
+				Type:         "*" + config.RelateFieldPrefix(relationship) + table.StructInfo.Type,
 				JSONTag:      config.JSONTag,
 				GORMTag:      config.GORMTag,
 				NewTag:       config.NewTag,
